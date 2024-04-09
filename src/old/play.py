@@ -27,8 +27,19 @@ async def play_command(voice_clients, message: Message, args, queues: list):
         url = args[0]
 
         loop = asyncio.get_event_loop()
-        yt_dl_options = {"format": "bestaudio/best"}
+        yt_dl_options = {
+            "format": "bestaudio/best"
+            # ,"postprocessors": [
+            #    {
+            #        "key": "FFmpegExtractAudio",
+            #        "preferredcodec": "wav",
+            #    }
+            # ],
+            # "outtmpl": f".\%(title)s.%(ext)s",  # this is where you can edit how you'd like the filenames to be formatted
+        }
         ytdl = yt_dlp.YoutubeDL(yt_dl_options)
+        # with yt_dlp.YoutubeDL(yt_dl_options) as ydl:
+        #     ydl.download([url])
         data = await loop.run_in_executor(
             None, lambda: ytdl.extract_info(url, download=False)
         )
@@ -39,10 +50,12 @@ async def play_command(voice_clients, message: Message, args, queues: list):
 
         queues.append(song)
 
-        if len(queues) > 1:
+        ifQueues = len(queues) > 1
+        ifNotIsPlaying = not voice_client.is_playing() and len(queues) > 0
+        if ifQueues:
             await message.channel.send(f"Posición de la cola #{len(queues)}")
 
-        if not voice_client.is_playing() and len(queues) > 0:
+        if ifNotIsPlaying:
             await play_next_song(voice_client, queues, message)
 
     except Exception as e:

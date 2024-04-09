@@ -72,6 +72,8 @@ pip install -r requirements.txt
 # run the bot
 python main.py # | Window
 python3 main.py # | Linux
+# opcional update pip
+python.exe -m pip install --upgrade pip
 ```
 
 <!-- MARKDOWN LINKS & IMAGES -->
