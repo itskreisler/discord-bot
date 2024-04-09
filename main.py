@@ -1,4 +1,4 @@
-import music
+from src import bot
 
 if __name__ == "__main__":
-    music.run_bot()
+    bot.run_bot()
