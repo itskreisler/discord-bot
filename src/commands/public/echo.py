@@ -1,4 +1,5 @@
 import re
+from ...bot import Bot
 from discord import Message, Client
 from re import Match
 
@@ -7,7 +8,7 @@ expreg = re.compile(r"^\?echo(?:@bot)?(?:\s+(.+))?$", re.I | re.M | re.S)
 # /^\/echo(?:@bot)?(?:\s+(.+))?$/ims
 
 
-async def cmd(client: Client, message: Message, match: Match):
+async def cmd(client: Bot, message: Message, match: Match):
     text, *_ = match.groups()
     if text is None:
         await message.channel.send("¡Nyaaa! ¡No puedo repetir un mensaje vacío!")

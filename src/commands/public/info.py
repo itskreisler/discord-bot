@@ -1,4 +1,5 @@
 import discord
+from ...bot import Bot
 from discord import Message, Client, Embed
 from re import Match
 import re
@@ -7,7 +8,7 @@ description = "Comando para obtener información del servidor."
 expreg = re.compile(r"^\?info(?:@bot)?$", re.I | re.M | re.S)
 
 
-async def cmd(client: Client, message: Message, match: Match):
+async def cmd(client: Bot, message: Message, match: Match):
     user = client.user
     guild = message.guild
     name = guild.name

@@ -12,16 +12,12 @@ async def send_message_with_timeout(txt, message: Message):
 
 
 async def play_next_song(voice_client: VoiceClient, queues: list, message: Message):
-    print("Cantidad de elementos en la cola:", len(queues))
     if len(queues) > 0:
         next_song_url = queues.pop(0)
         player = discord.FFmpegOpusAudio(next_song_url, **ffmpeg_options)
-        loop = asyncio.get_event_loop()
         voice_client.play(
             player,
-            after=lambda e: loop.run_until_complete(
-                play_next_song(voice_client, queues, message)
-            ),
+            after=lambda e: asyncio.run(play_next_song(voice_client, queues, message)),
         )
     else:
         await send_message_with_timeout("No hay mas elementos en la cola", message)

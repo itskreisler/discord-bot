@@ -4,7 +4,7 @@ import importlib
 import os
 import glob
 import re
-from discord import Message, Client
+from discord import Message, Client, VoiceClient
 from .lib.settings import TOKEN
 
 
@@ -15,8 +15,8 @@ class CMD:
 
 
 class DB(dict):
-    queues = []
-    voice_clients = {}
+    queues: list[str] = []
+    voice_clients: dict[str, VoiceClient] = {}
 
 
 class Bot(Client):
@@ -59,11 +59,9 @@ class Bot(Client):
             )[1:][:-3]
             try:
                 module: CMD = importlib.import_module(module_path)
-                print(f"descrpción del módulo {module.description}")
                 comandos.update({module_name: module})
             except Exception as e:
                 print(f"Error al cargar el módulo {module_name}: {e}")
-        # print de colore verde
         print("\033[92mComandos cargados exitosamente!\033[0m")
         return comandos
 
