@@ -1,11 +1,12 @@
 import discord
-from settings import TOKEN
+import json
+from discord import Message
+from .lib.settings import TOKEN
 from commands.pause import pause_command
 from commands.play import play_command
 from commands.resume import resume_command
 from commands.stop import stop_command
 from commands.skip import skip_command
-
 
 
 def run_bot():
@@ -18,18 +19,21 @@ def run_bot():
 
         @client.event
         async def on_ready():
-            print(f'{client.user} esta ahora corriendo!')
+            print(f"{client.user} esta ahora corriendo!")
 
-        @client.event
-        async def on_message(message):
+        @client.event()
+        async def on_message(message: Message):
             if message.author == client.user:
                 return
 
             command, *args = message.content.split()
+            print(json.dumps({command, args}, indent=4))
 
             if command == "?play":
-                if not args: 
-                    await message.channel.send("Debes incluir la url después del comando.")
+                if not args:
+                    await message.channel.send(
+                        "Debes incluir la url después del comando."
+                    )
                     return
                 await play_command(voice_clients, message, args, queues)
             elif command == "?pause":
