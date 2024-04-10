@@ -49,6 +49,13 @@ async def cmd(client: Bot, message: Message, match: Match):
         url="https://www.paypal.com/paypalme/itskreisler",
         emoji="💰",
     )
+    invite_link = Button(
+        style=discord.ButtonStyle.url,
+        label="Invite me",
+        url="https://discord.com/api/oauth2/authorize?client_id=908871545294835723&permissions=8&scope=bot",
+        emoji="🤖",
+    )
     view.add_item(buymeacoffee)
     view.add_item(payme)
+    view.add_item(invite_link)
     await message.reply(embed=embed, view=view)
