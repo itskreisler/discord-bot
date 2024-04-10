@@ -11,9 +11,10 @@ admin = False
 description = (
     "Comando de prueba para verificar que el bot está funcionando correctamente."
 )
-expreg = re.compile(r"^\?ping")
+expreg = re.compile(r"^\?d(?:ebug)?$")
 
 
 async def cmd(client: Bot, message: Message, match: Match):
-
-    await message.channel.send("¡Nyaaa! ¡Pong!")
+    d = client.get_debug()
+    # enviar mensaje
+    await message.channel.send(f"Debug: {d}")

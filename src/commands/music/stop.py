@@ -14,3 +14,6 @@ async def cmd(client: Bot, message: Message, match: Match):
     client.is_playing = False
     client.is_paused = False
     await client.vc.disconnect()
+    # optional
+    client.music_queue = []
+    client.vc = None

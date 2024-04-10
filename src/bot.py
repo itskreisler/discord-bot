@@ -7,8 +7,6 @@ import re
 import asyncio
 from discord import Message, Client, VoiceClient
 from time import sleep
-
-# from discord.guild import VocalGuildChannel
 from discord.channel import VoiceChannel, StageChannel
 from .utils.settings import TOKEN, ffmpeg_options
 from yt_dlp import YoutubeDL
@@ -42,14 +40,17 @@ class CMD:
 
 
 class DB(dict):
-    queues: list[str] = []
-    voice_clients: dict[str, VoiceClient] = {}
+    # queues: list[str] = []
+    # voice_clients: dict[str, VoiceClient] = {}
+    def __init__(self):
+        pass
 
 
 class Bot(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db: DB = DB()
+        self.activity = discord.Game(name="?help")
         # Define la ruta de tu carpeta de comandos
         self.COMANDOS_FOLDER = "commands"
         self.SRC_FOLDER = "src"
@@ -78,6 +79,7 @@ class Bot(Client):
 
     async def on_ready(self):
         print(f"¡Conectado como {self.user}!")
+        asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
 
     async def on_message(self, message: Message):
         if message.author == self.user:
@@ -191,3 +193,35 @@ class Bot(Client):
                 print(f"Error al cargar el módulo {module_name}: {e}")
         print("\033[92mComandos cargados exitosamente!\033[0m")
         return comandos
+
+    def get_debug(self):
+        atributos = {
+            "is_playing": self.is_playing,
+            "is_paused": self.is_paused,
+            "music_queue": self.music_queue,
+            "vc": self.vc,
+            # "ytdl": self.ytdl,
+        }
+
+        print(atributos)
+        return atributos
+
+    # validar si el bot no esta reproduciendo musica durante 5 minutos, entonces desconectarlo
+    async def check_music(self):
+        while True:
+            # Check inactivity
+            print("Checking inactivity")
+            await asyncio.sleep(300)
+            # ifNotPP = not any([self.is_playing, self.is_paused])
+            # ifCola = len(self.music_queue) == 0
+            # print(f"ifNotPP: {ifNotPP}, ifCola: {ifCola}")
+            # If not playing, paused, or in a voice channel, disconnect
+            if not self.is_playing:
+                if self.vc:
+                    await self.vc.channel.send("```❌ Desconectado por inactividad```")
+                    await self.vc.disconnect()
+                    self.vc = None
+                    self.music_queue = []
+                    self.is_playing = False
+                    self.is_paused = False
+                    print("Desconectado por inactividad")
