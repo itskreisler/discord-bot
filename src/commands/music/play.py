@@ -1,10 +1,10 @@
 from discord import Message
-import asyncio
 import yt_dlp
 from ...bot import Bot
 from ...utils.next_song import play_next_song
 import re
 from re import Match
+import asyncio
 
 description = "Comando para reproducir música."
 expreg = re.compile(r"^\?play(?:@bot)?(?:\s+(.+))?$", re.I | re.M | re.S)
@@ -38,9 +38,10 @@ async def cmd(client: Bot, message: Message, match: Match):
     try:
         url = text
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         yt_dl_options = {
-            "format": "bestaudio/best"
+            "format": "bestaudio/best",
+            "noplaylist": True,
             # ,"postprocessors": [
             #    {
             #        "key": "FFmpegExtractAudio",
@@ -59,7 +60,6 @@ async def cmd(client: Bot, message: Message, match: Match):
         song = data["url"]
         if song is None:
             await message.channel.send("Debes poner la url de tu canción.")
-
         queues.append(song)
 
         ifQueues = len(queues) > 1
@@ -71,7 +71,7 @@ async def cmd(client: Bot, message: Message, match: Match):
             await message.channel.send(f"Posición de la cola #{len(queues)}")
 
         if ifNotIsPlaying:
-            await play_next_song(voice_client, queues, message)
+            await play_next_song(client, message, voice_client)
 
     except Exception as e:
         print(e)

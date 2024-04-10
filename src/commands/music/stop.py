@@ -1,5 +1,4 @@
-from discord import Message, VoiceClient
-
+from discord import Message
 from ...bot import Bot
 import re
 from re import Match

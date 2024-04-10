@@ -1,4 +1,3 @@
-import discord
 from discord import Message
 from ...bot import Bot
 import re
