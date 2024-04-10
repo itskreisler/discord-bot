@@ -1,13 +1,10 @@
 from discord import Message
-import yt_dlp
 from ...bot import Bot
-from ...utils.next_song import play_next_song
 import re
 from re import Match
-import asyncio
 
 description = "Comando para reproducir música."
-expreg = re.compile(r"^\?play(?:@bot)?(?:\s+(.+))?$", re.I | re.M | re.S)
+expreg = re.compile(r"^\?pl(?:ay)?(?:@bot)?(?:\s+(.+))?$", re.I | re.M | re.S)
 
 
 async def cmd(client: Bot, message: Message, match: Match):
