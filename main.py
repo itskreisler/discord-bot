@@ -1,5 +1,5 @@
 from src.bot import Bot
-from src.lib.settings import COMMAND_PREFIX
+from src.utils.settings import COMMAND_PREFIX
 import discord
 
 if __name__ == "__main__":

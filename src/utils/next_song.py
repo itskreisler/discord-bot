@@ -1,7 +1,7 @@
 import discord
 from discord import Message, VoiceClient
 from discord.player import FFmpegOpusAudio
-from settings import ffmpeg_options
+from .settings import ffmpeg_options
 from ..bot import Bot
 
 
