@@ -18,15 +18,17 @@ async def cmd(client: Bot, message: Message, match: Match):
 
 `?q[queue]` - Muestra la cola de reproducción actual 
 
-`?s[skip]` - Salta la canción que se está reproduciendo actualmente 
+`?sk[skip]` - Salta la canción que se está reproduciendo actualmente 
 
 `?c[clear]` - Detiene la música y limpia la cola de reproducción 
 
-`?l[leave]` - Desconecta al bot del canal de voz 
+`?st[stop]` - Desconecta al bot del canal de voz 
 
 `?pa[pause]` - Pausa la canción que se está reproduciendo actualmente o la reanuda si ya está pausada 
 
-`?r[resume]` - Reanuda la reproducción de la canción actual si está pausada
+`?res[resume]` - Reanuda la reproducción de la canción actual si está pausada
+
+`?rem[remove]` - Elimina la ultima canción de la cola de reproducción
 """
     # Crear un objeto Embed con la lista de comandos y añade un boton para donar a buymeacoffee
 
