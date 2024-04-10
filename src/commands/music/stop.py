@@ -8,6 +8,9 @@ expreg = re.compile(r"^\?st(?:op)?(?:@bot)?$", re.I | re.M | re.S)
 
 
 async def cmd(client: Bot, message: Message, match: Match):
+    if client.vc == None:
+        await message.reply("```I'm not in a voice channel```")
+        return
     client.is_playing = False
     client.is_paused = False
     await client.vc.disconnect()

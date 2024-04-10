@@ -6,6 +6,7 @@ import glob
 import re
 import asyncio
 from discord import Message, Client, VoiceClient
+from time import sleep
 
 # from discord.guild import VocalGuildChannel
 from discord.channel import VoiceChannel, StageChannel
@@ -129,6 +130,7 @@ class Bot(Client):
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
+            sleep(2)
             self.vc.play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
@@ -153,6 +155,7 @@ class Bot(Client):
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
+            sleep(2)
             self.vc.play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
