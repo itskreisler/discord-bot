@@ -120,9 +120,9 @@ class Bot(Client):
     async def on_message(self, message: Message):
         if message.author == self.user:
             return
-        print(f"Mensaje recibido: {message.content}")
         existsCommand, command = self.encontrar_comando(message.content)
         if existsCommand:
+            print(f"Mensaje recibido: {message.content}")
             expreg, cmd = command
             print(f"Comando encontrado: {expreg}")
             await cmd(self, message, re.match(expreg, message.content))
