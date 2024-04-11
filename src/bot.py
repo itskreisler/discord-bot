@@ -6,7 +6,6 @@ import glob
 import re
 import asyncio
 from discord import Message, Client, VoiceClient, Activity
-from time import sleep
 from discord.channel import VoiceChannel, StageChannel
 from .utils.settings import TOKEN, ffmpeg_options, SUPER_ADMIN
 from yt_dlp import YoutubeDL
@@ -74,6 +73,7 @@ class Bot(Client):
         super().__init__(*args, **kwargs)
         self.db: DB = DB()
         self.activity = discord.Game(name="?help")
+        self.TIMEOUT_INTERVAL = 300  # 5 minutes
 
         # Define la ruta de tu carpeta de comandos
         self.COMANDOS_FOLDER = "commands"
@@ -117,6 +117,7 @@ class Bot(Client):
         print(f"Lita de super admins: {self.db.super_admin}")
         print(f"¡Conectado como {self.user}!")
         asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
+        asyncio.run_coroutine_threadsafe(self.x_update_presence(), self.loop)
 
     async def on_message(self, message: Message):
         if message.author == self.user:
@@ -170,7 +171,7 @@ class Bot(Client):
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
-            sleep(2)
+
             self.vc[guild_id].play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
@@ -195,7 +196,7 @@ class Bot(Client):
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
-            sleep(2)
+
             self.vc[guild_id].play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
@@ -254,8 +255,7 @@ class Bot(Client):
         while True:
             # print Check inactivity color green
             print("\033[92mChecking inactivity...\033[0m", datetime.now())
-            await asyncio.sleep(300)
-            asyncio.run_coroutine_threadsafe(self.x_update_presence(), self.loop)
+            await asyncio.sleep(self.TIMEOUT_INTERVAL)
             # cambiar la presencia del bot a cuantos servidor esta conectado y esta reproduciendo musica
             for guild_id, is_playing in self.is_playing.items():
                 if not is_playing:
@@ -263,32 +263,32 @@ class Bot(Client):
                         await self.vc[guild_id].channel.send(
                             "```❌ Desconectado por inactividad```"
                         )
-                        # await self.vc[guild_id].disconnect()
-                        try:
-                            asyncio.run_coroutine_threadsafe(
-                                self.vc[guild_id].disconnect(), self.loop
-                            )
-                        except Exception as e:
-                            print("Error al desconectar el bot")
-                        del self.music_queues[guild_id]
-                        del self.vc[guild_id]
-                        del self.is_playing[guild_id]
-                        del self.is_paused[guild_id]
+                        # await self.vc[guild_id].voice_disconnect()
+                        await self.vc[guild_id].disconnect()
+                        self.music_queues[guild_id] = []
+                        # self.vc[guild_id] = None
+                        self.vc.pop(guild_id, None)
+                        self.is_playing[guild_id] = False
+                        self.is_paused[guild_id] = False
                         print("Desconectado por inactividad")
 
     async def x_update_presence(self):
-        songs = 0
-        for guild_id, queue in self.music_queues.items():
-            songs += len(queue)
-        text = "canciones" if songs > 1 else "canción"
-        if songs > 0:
-            await self.change_presence(
-                activity=Activity(
-                    type=discord.ActivityType.listening,
-                    name=f"{songs} {text}",
+        while True:
+            # print update presence color blue
+            print("\033[94mUpdating presence...\033[0m", datetime.now())
+            await asyncio.sleep(self.TIMEOUT_INTERVAL)
+            songs = 0
+            for guild_id, queue in self.music_queues.items():
+                songs += len(queue)
+            text = "canciones" if songs > 1 else "canción"
+            if songs > 0:
+                await self.change_presence(
+                    activity=Activity(
+                        type=discord.ActivityType.listening,
+                        name=f"{songs} {text}",
+                    )
                 )
-            )
-        else:
-            await self.change_presence(
-                activity=Activity(type=discord.ActivityType.playing, name="?help")
-            )
+            else:
+                await self.change_presence(
+                    activity=Activity(type=discord.ActivityType.playing, name="?help")
+                )
