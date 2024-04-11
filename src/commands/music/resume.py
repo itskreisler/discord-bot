@@ -2,13 +2,15 @@ from discord import Message
 from ...bot import Bot
 import re
 from re import Match
+from ...utils.settings import COMMAND_PREFIX
 
 description = "Reanuda la reproducción de música en el canal de voz actual."
-expreg = re.compile(r"^\?res(?:ume)?(?:@bot)?$", re.I | re.M | re.S)
+expreg = re.compile(rf"^{COMMAND_PREFIX}res(?:ume)?(?:@bot)?$", re.I | re.M | re.S)
 
 
 async def cmd(client: Bot, message: Message, match: Match):
-    if client.is_paused:
-        client.is_paused = False
-        client.is_playing = True
-        client.vc.resume()
+    guild_id = message.guild.id
+    if guild_id in client.music_queues and client.is_paused[guild_id]:
+        client.is_paused[guild_id] = False
+        client.is_playing[guild_id] = True
+        client.vc[guild_id].resume()

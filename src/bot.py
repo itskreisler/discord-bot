@@ -5,13 +5,14 @@ import os
 import glob
 import re
 import asyncio
-from discord import Message, Client, VoiceClient
+from discord import Message, Client, VoiceClient, Activity
 from time import sleep
 from discord.channel import VoiceChannel, StageChannel
 from .utils.settings import TOKEN, ffmpeg_options, SUPER_ADMIN
 from yt_dlp import YoutubeDL
 from youtubesearchpython import VideosSearch
 from typing import TypedDict, List, Tuple, Union, Callable, Dict
+from datetime import datetime
 
 
 class ResultList(TypedDict):
@@ -73,16 +74,26 @@ class Bot(Client):
         super().__init__(*args, **kwargs)
         self.db: DB = DB()
         self.activity = discord.Game(name="?help")
+
         # Define la ruta de tu carpeta de comandos
         self.COMANDOS_FOLDER = "commands"
         self.SRC_FOLDER = "src"
         self.comandos: dict[str, CMD]
 
         # all the music related stuff
-        self.is_playing = False
-        self.is_paused = False
+        self.vc: Dict[int, VoiceClient] = (
+            {}
+        )  # Dictionary to store VoiceClient for each guild
+        self.is_playing: Dict[int, bool] = (
+            {}
+        )  # Dictionary to store is_playing status for each guild
+        self.is_paused: Dict[int, bool] = (
+            {}
+        )  # Dictionary to store is_paused status for each guild
 
-        self.music_queue: List[Tuple[SEARCHYT, Union[VoiceChannel, StageChannel]]] = []
+        self.music_queues: Dict[
+            int, List[Tuple[SEARCHYT, Union[VoiceChannel, StageChannel]]]
+        ] = {}
         """
         .. code-block:: python3
             # [({source,title}, channel)]
@@ -99,13 +110,12 @@ class Bot(Client):
             # "outtmpl": f".\%(title)s.%(ext)s",  # this is where you can edit how you'd like the filenames to be formatted
         }
         self.FFMPEG_OPTIONS = ffmpeg_options
-        self.vc: VoiceClient = None
         self.ytdl = YoutubeDL(self.YDL_OPTIONS)
 
     async def on_ready(self):
         print(f"Lita de super admins: {self.db.super_admin}")
         print(f"¡Conectado como {self.user}!")
-        # asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
+        asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
 
     async def on_message(self, message: Message):
         if message.author == self.user:
@@ -135,63 +145,64 @@ class Bot(Client):
 
     # infinite loop checking
     async def play_music(self, message: Message):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
+        guild_id = message.guild.id
+        if guild_id in self.music_queues and len(self.music_queues[guild_id]) > 0:
+            self.is_playing[guild_id] = True
 
-            m_url = self.music_queue[0][0]["source"]
+            m_url = self.music_queues[guild_id][0][0]["source"]
             # try to connect to voice channel if you are not already connected
-            if self.vc == None or not self.vc.is_connected():
-                self.vc = await self.music_queue[0][1].connect()
+            if guild_id not in self.vc or not self.vc[guild_id].is_connected():
+                self.vc[guild_id] = await self.music_queues[guild_id][0][1].connect()
 
                 # in case we fail to connect
-                if self.vc == None:
+                if not self.vc[guild_id]:
                     await message.channel.send(
                         "```Could not connect to the voice channel```"
                     )
                     return
             else:
-                await self.vc.move_to(self.music_queue[0][1])
+                await self.vc[guild_id].move_to(self.music_queues[guild_id][0][1])
             # remove the first element as you are currently playing it
-            self.music_queue.pop(0)
+            self.music_queues[guild_id].pop(0)
             loop = asyncio.get_event_loop()
             data: YTDLINFO = await loop.run_in_executor(
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
             sleep(2)
-            self.vc.play(
+            self.vc[guild_id].play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
-                    self.play_next(), self.loop
+                    self.play_next(guild_id), self.loop
                 ),
             )
 
         else:
-            self.is_playing = False
+            self.is_playing[guild_id] = False
 
-    async def play_next(self):
-        if len(self.music_queue) > 0:
-            self.is_playing = True
+    async def play_next(self, guild_id):
+        if guild_id in self.music_queues and len(self.music_queues[guild_id]) > 0:
+            self.is_playing[guild_id] = True
 
             # get the first url
-            m_url = self.music_queue[0][0]["source"]
+            m_url = self.music_queues[guild_id][0][0]["source"]
 
             # remove the first element as you are currently playing it
-            self.music_queue.pop(0)
+            self.music_queues[guild_id].pop(0)
             loop = asyncio.get_event_loop()
             data: YTDLINFO = await loop.run_in_executor(
                 None, lambda: self.ytdl.extract_info(m_url, download=False)
             )
             song = data["url"]
             sleep(2)
-            self.vc.play(
+            self.vc[guild_id].play(
                 discord.FFmpegPCMAudio(song, **self.FFMPEG_OPTIONS),
                 after=lambda e: asyncio.run_coroutine_threadsafe(
-                    self.play_next(), self.loop
+                    self.play_next(guild_id), self.loop
                 ),
             )
         else:
-            self.is_playing = False
+            self.is_playing[guild_id] = False
 
     def encontrar_comando(self, texto):
         for command_name, command_module in self.comandos.items():
@@ -228,7 +239,7 @@ class Bot(Client):
         atributos = {
             "is_playing": self.is_playing,
             "is_paused": self.is_paused,
-            "music_queue": self.music_queue,
+            "music_queues": self.music_queues,
             "vc": self.vc,
             "db": db_dict,
             # "ytdl": self.ytdl
@@ -240,19 +251,37 @@ class Bot(Client):
     # validar si el bot no esta reproduciendo musica durante 5 minutos, entonces desconectarlo
     async def check_music(self):
         while True:
-            # Check inactivity
-            print("Checking inactivity")
+            # print Check inactivity color green
+            print("\033[92mChecking inactivity...\033[0m", datetime.now())
             await asyncio.sleep(300)
-            # ifNotPP = not any([self.is_playing, self.is_paused])
-            # ifCola = len(self.music_queue) == 0
-            # print(f"ifNotPP: {ifNotPP}, ifCola: {ifCola}")
-            # If not playing, paused, or in a voice channel, disconnect
-            if not self.is_playing:
-                if self.vc:
-                    await self.vc.channel.send("```❌ Desconectado por inactividad```")
-                    await self.vc.disconnect()
-                    self.vc = None
-                    self.music_queue = []
-                    self.is_playing = False
-                    self.is_paused = False
-                    print("Desconectado por inactividad")
+            asyncio.run_coroutine_threadsafe(self.x_update_presence(), self.loop)
+            # cambiar la presencia del bot a cuantos servidor esta conectado y esta reproduciendo musica
+            for guild_id, is_playing in self.is_playing.items():
+                if not is_playing:
+                    if guild_id in self.vc and self.vc[guild_id]:
+                        await self.vc[guild_id].channel.send(
+                            "```❌ Desconectado por inactividad```"
+                        )
+                        await self.vc[guild_id].disconnect()
+                        del self.music_queues[guild_id]
+                        del self.vc[guild_id]
+                        del self.is_playing[guild_id]
+                        del self.is_paused[guild_id]
+                        print("Desconectado por inactividad")
+
+    async def x_update_presence(self):
+        songs = 0
+        for guild_id, queue in self.music_queues.items():
+            songs += len(queue)
+        text = "canciones" if songs > 1 else "canción"
+        if songs > 0:
+            await self.change_presence(
+                activity=Activity(
+                    type=discord.ActivityType.listening,
+                    name=f"{songs} {text}",
+                )
+            )
+        else:
+            await self.change_presence(
+                activity=Activity(type=discord.ActivityType.playing, name="?help")
+            )
