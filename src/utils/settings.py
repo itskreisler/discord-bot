@@ -1,10 +1,13 @@
 import os
 from dotenv import load_dotenv
+from typing import List
+import json
 
 load_dotenv()
 
 TOKEN: str = os.getenv("DISCORD_TOKEN")
 COMMAND_PREFIX: str = os.getenv("COMMAND_PREFIX")
+SUPER_ADMIN: List[str] = json.loads(os.getenv("SUPER_ADMIN"))  # [...,"username"]
 
 ### Config ffmpeg
 ffmpeg_options = {

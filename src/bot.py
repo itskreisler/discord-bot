@@ -8,10 +8,10 @@ import asyncio
 from discord import Message, Client, VoiceClient
 from time import sleep
 from discord.channel import VoiceChannel, StageChannel
-from .utils.settings import TOKEN, ffmpeg_options
+from .utils.settings import TOKEN, ffmpeg_options, SUPER_ADMIN
 from yt_dlp import YoutubeDL
 from youtubesearchpython import VideosSearch
-from typing import TypedDict, List, Tuple, Union, Callable
+from typing import TypedDict, List, Tuple, Union, Callable, Dict
 
 
 class ResultList(TypedDict):
@@ -39,11 +39,33 @@ class CMD:
     cmd: Callable
 
 
-class DB(dict):
-    # queues: list[str] = []
-    # voice_clients: dict[str, VoiceClient] = {}
-    def __init__(self):
-        pass
+class DB:
+    super_admin: List[str] = SUPER_ADMIN
+    premium_users: Dict[int, List[str]] = {}
+    """
+    {
+        1234: ["user123", "user456"],  # Guild ID 1234 has premium users user123 and user456
+        5678: ["user789"]  # Guild ID 5678 has premium user user789
+    }
+    """
+
+    # Add a premium user to a guild
+    def add_premium_user(self, guild_id: int, user_id: str) -> None:
+        # Check if the guild is already in the list
+        if guild_id not in self.premium_users:
+            self.premium_users[guild_id] = []  # Create an empty list for new guilds
+        # check if the user is already in the list
+        if user_id not in self.premium_users[guild_id]:
+            self.premium_users[guild_id].append(user_id)
+            # Añade el usuario a la lista de premium si no está
+
+    def is_guild_premium_exists(self, guild_id: int) -> bool:
+        return guild_id in self.premium_users
+
+    def is_premium_user(self, guild_id: int, user_id: str) -> bool:
+        return (
+            guild_id in self.premium_users and user_id in self.premium_users[guild_id]
+        )
 
 
 class Bot(Client):
@@ -60,8 +82,11 @@ class Bot(Client):
         self.is_playing = False
         self.is_paused = False
 
-        # 2d array containing [song, channel]
         self.music_queue: List[Tuple[SEARCHYT, Union[VoiceChannel, StageChannel]]] = []
+        """
+        .. code-block:: python3
+            # [({source,title}, channel)]
+        """
         self.YDL_OPTIONS = {
             "format": "bestaudio/best",
             "noplaylist": True,
@@ -78,8 +103,9 @@ class Bot(Client):
         self.ytdl = YoutubeDL(self.YDL_OPTIONS)
 
     async def on_ready(self):
+        print(f"Lita de super admins: {self.db.super_admin}")
         print(f"¡Conectado como {self.user}!")
-        asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
+        # asyncio.run_coroutine_threadsafe(self.check_music(), self.loop)
 
     async def on_message(self, message: Message):
         if message.author == self.user:
@@ -195,15 +221,20 @@ class Bot(Client):
         return comandos
 
     def get_debug(self):
+        db_dict = {
+            "super_admin": self.db.super_admin,
+            "premium_users": self.db.premium_users,
+        }
         atributos = {
             "is_playing": self.is_playing,
             "is_paused": self.is_paused,
             "music_queue": self.music_queue,
             "vc": self.vc,
-            # "ytdl": self.ytdl,
+            "db": db_dict,
+            # "ytdl": self.ytdl
         }
 
-        print(atributos)
+        ##print(atributos)
         return atributos
 
     # validar si el bot no esta reproduciendo musica durante 5 minutos, entonces desconectarlo

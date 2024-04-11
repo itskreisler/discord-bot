@@ -4,10 +4,11 @@ from discord import Message, Embed
 from discord.ui import Button
 from re import Match
 import re
+from ...utils.settings import COMMAND_PREFIX
 
 
 description = "Comando para mostrar la lista de comandos."
-expreg = re.compile(r"^\?h(?:elp)?(?:@bot)?")
+expreg = re.compile(rf"^{COMMAND_PREFIX}h(?:elp)?(?:@bot)?")
 
 
 async def cmd(client: Bot, message: Message, match: Match):

@@ -1,6 +1,5 @@
-import discord
 from ...bot import Bot
-from discord import Message, Client, Embed
+from discord import Message, Embed
 from re import Match
 import re
 
