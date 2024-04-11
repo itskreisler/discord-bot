@@ -101,6 +101,7 @@ class Bot(Client):
         self.YDL_OPTIONS = {
             "format": "bestaudio/best",
             "noplaylist": True,
+            "quiet": True,
             # ,"postprocessors": [
             #    {
             #        "key": "FFmpegExtractAudio",

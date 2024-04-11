@@ -15,7 +15,7 @@ async def cmd(client: Bot, message: Message, match: Match):
     comandos = """
 `?h[help]` - Muestra todos los comandos disponibles
 
-`?pl[play]` `<query>` - Busca la canción en YouTube y la reproduce en tu canal actual. Continuará reproduciendo la canción actual si estaba pausada 
+`?pl[play]` `<query>` - Busca la canción en YouTube y la reproduce en tu canal actual. `SOLO SE ADMITEN ENLACES DE YOUTUBE o BUSQUEDAS DE YOUTUBE`
 
 `?q[queue]` - Muestra la cola de reproducción actual 
 
