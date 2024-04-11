@@ -263,7 +263,13 @@ class Bot(Client):
                         await self.vc[guild_id].channel.send(
                             "```❌ Desconectado por inactividad```"
                         )
-                        await self.vc[guild_id].disconnect()
+                        # await self.vc[guild_id].disconnect()
+                        try:
+                            asyncio.run_coroutine_threadsafe(
+                                self.vc[guild_id].disconnect(), self.loop
+                            )
+                        except Exception as e:
+                            print("Error al desconectar el bot")
                         del self.music_queues[guild_id]
                         del self.vc[guild_id]
                         del self.is_playing[guild_id]
