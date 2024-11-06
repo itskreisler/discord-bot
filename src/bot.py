@@ -102,6 +102,8 @@ class Bot(Client):
             "format": "bestaudio/best",
             "noplaylist": True,
             "quiet": True,
+            "username": "oauth2",
+            "password": "",
             # ,"postprocessors": [
             #    {
             #        "key": "FFmpegExtractAudio",
